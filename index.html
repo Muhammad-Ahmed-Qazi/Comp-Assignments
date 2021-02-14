@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Worksheet No.1 Solutions</title>
-    <link rel="shortcut icon" href="https://raw.githubusercontent.com/Muhammad-Ahmed-Qazi/Comp-Assignments/main/assignment.png">
+    <link rel="shortcut icon" href="https://muhammad-ahmed-qazi.github.io/Comp-Assignments/assignment.png">
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
     <style>
@@ -25,7 +25,7 @@
                 <br>
                 <p class="lead">
                     This HTML page checks the ID of the person reaching to see the solutions.
-                    Please enter your email and the provided (emailed) password in the form below. You will then be able to click any file from the following list which will download the <mark>.py</mark> file automatically for you.
+                    Enter your email and given (Emailed) password in the form below. Then you will be able to click any file from the following list which will open a new tab and download the <mark>.py</mark> file automatically for you.
                 </p>
                 <div class="alert alert-warning alert-dismissible fade show" role="alert">
                     <strong>Attention!</strong> The downloading .py file may ask you that the file may be harmful for your computer. Please click <b>Keep</b> if you want to get the file!
@@ -46,8 +46,13 @@
                 <div class="mb-3">
                   <label for="exampleInputPassword1" class="form-label">Password</label>
                   <input type="password" class="form-control" id="exampleInputPassword1">
+                  <div class="row col-xs-2 col-lg-2 p-3 pt-2 pb-0">
+                    <button type="button" onmouseover="pass_see()" onmouseout="pass_not_see()" class="btn btn-warning">Show Password</button>
+                  </div>
                 </div>
-                <button type="button" onclick="check()" class="btn btn-primary">Submit</button>
+                <div class="row col-xs-2 col-lg-2 p-3 pt-0">
+                    <button type="button" onclick="check()" class="btn btn-primary">Submit</button>
+                  </div>
             </form>
         </div>  
 
@@ -303,7 +308,7 @@
             var email = document.forms["formcheck"]["exampleInputEmail1"].value;
             var pass = document.forms["formcheck"]["exampleInputPassword1"].value;
             if (email == 'syedzaryabhussain@gmail.com') {
-                if (pass == 'comp_sci_2210_ws1') {
+                if (pass == ' ') {
                     console.log('Both are correct!')
                     var list = document.getElementById('list-files').style.display = 'block';
                 }else {
@@ -312,6 +317,14 @@
             } else {
                 console.log('Email is incorrect!')
             }
+        }
+        function pass_see() {
+            var password = document.getElementById('exampleInputPassword1');
+            password.type = "text";
+        }
+        function pass_not_see() {
+            var password = document.getElementById('exampleInputPassword1');
+            password.type = "password";
         }
     </script>
 
