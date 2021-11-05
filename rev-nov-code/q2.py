@@ -2,7 +2,7 @@ temperatures = []
 max_temp = 0
 min_temp = 1022
 
-for count in range(0, 25):
+for count in range(0, 24):
     temp = float(input('Enter the temperature (Celsius) of hour no.' + str(count + 1) + ': '))
     temp = (temp * 9/5) + 32
     temperatures.append(temp)
