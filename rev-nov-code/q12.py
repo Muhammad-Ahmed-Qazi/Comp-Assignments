@@ -2,7 +2,7 @@ import datetime as dt
 
 error_count = 0
 
-for count in range(0, 4):
+for count in range(0, 1800):
     stud_id = input('Enter your ID: ')
     start = input('Enter the date of starting school: (YYMMDD --> E.g. 070910) ')
     start = dt.date(int(start[0] + start[1]), int(start[2] + start[3]), int(start[4] + start[5]))
