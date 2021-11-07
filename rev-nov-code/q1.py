@@ -2,7 +2,7 @@ import datetime
 
 tot_time = 0
 
-for count in range(0, 2):
+for count in range(0, 30):
     name = input('Enter the name of student ' + str(count + 1) + ': ')
     print('Please input time in 24-hr format! Example Input: 16:23:57 (HH:MM:SS)')
     log_on = input('Enter the time at which the student logged on: ')
