@@ -12,5 +12,5 @@ for count in range(0, 30):
     calc_time = date_time_obj_2 - date_time_obj_1
     tot_time = tot_time + (calc_time).total_seconds()
 
-avg = float(tot_time) / 2
+avg = float(tot_time) / 30
 print('Average length of time per day spent by each student on the internet:', str(datetime.timedelta(seconds=avg)))
