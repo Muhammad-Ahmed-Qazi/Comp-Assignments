@@ -1,0 +1,291 @@
+FROM prettytable IMPORT PrettyTable
+IMPORT math
+
+DECLARE ticket_type[5:5] AS ["a": "One Adult", "b": "One Child *", "c": "One Senior", "d": "Family Ticket **", "e": "Groups (6 or > 6) ***"]
+DECLARE cost_one[5:5] AS ["a": 20.0, "b": 12.0, "c": 16.0, "d": 60.0, "e": 15.0]
+DECLARE cost_two[5:5] AS ["a": 30.0, "b": 18.0, "c": 24.0, "d": 90.0, "e": 22.50]
+DECLARE ext_attract[3:3] AS ["f": "Lion Feeding", "g": "Penguin Feeding", "h": "Evening Barbecue"]
+DECLARE ext_cost[3:3] AS ["f": 2.50, "g": 2.0, "h": 5.0]
+DECLARE days[:7] AS ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+DEF sim_people(tno):
+    simulation <-- [0, 0, 0, 0, 0, 0]
+    FOR ticket IN tno
+        IF ticket.SPLIT(" x ")[0] == "a" THEN simulation[0] += 1 * INT(ticket.SPLIT(" x ")[1])
+        ENDIF
+        IF ticket.SPLIT(" x ")[0] == "b" THEN simulation[1] += 1 * INT(ticket.SPLIT(" x ")[1])
+        ENDIF
+        IF ticket.SPLIT(" x ")[0] == "c" THEN simulation[2] += 1 * INT(ticket.SPLIT(" x ")[1])
+        ENDIF
+        IF ticket.SPLIT(" x ")[0] == "d" THEN simulation[3] += 2 * INT(ticket.SPLIT(" x ")[1]); simulation[4] += 3 * int(ticket.split(" x ")[1])
+        ENDIF
+        IF ticket.SPLIT(" x ")[0] == "e" THEN simulation[5] += 1 * INT(ticket.SPLIT(" x ")[1])
+        ENDIF
+    NEXT
+    simulation[5] += (simulation[0] + simulation[1] + simulation[2] + simulation[3] + simulation[4])
+    RETURN simulation
+
+DEF inp_format(tno_sim):
+    tno_sim <-- tno_sim.LSTRIP("-").RSTRIP("-")
+    tno_sim <-- tno_sim.REPLACE("--", " & ")
+    RETURN tno_sim
+
+DEF cost_sim(tno_sim, duration):
+    sim_cost <-- 0
+    IF duration == 2 THEN 
+        FOR item IN tno_sim
+            sim_cost <-- sim_cost + cost_two[item.SPLIT(" x ")[0]] * INT(item.SPLIT(" x ")[1])
+        NEXT
+    ELSEIF duration == 1 THEN
+        FOR item IN tno_sim
+            sim_cost <-- sim_cost + cost_one[item.SPLIT(" x ")[0]] * INT(item.SPLIT(" x ")[1])
+        NEXT
+    ENDIF
+    RETURN [tno_sim, sim_cost]
+
+DEF single(adults, children, seniors, duration):
+    tno_sim <-- ""
+    IF adults > 0 THEN tno_sim <-- tno_sim + "-a x " + STR(adults) + "-"
+    ENDIF
+    IF children > 0 THEN tno_sim <-- tno_sim + "-b x " + STR(children) + "-"
+    ENDIF
+    IF seniors > 0 THEN tno_sim <-- tno_sim + "-c x " + STR(seniors) + "-"
+    ENDIF
+    tno_sim <-- inp_format(tno_sim).SPLIT(" & ")
+    RETURN cost_sim(tno_sim, duration)
+
+DEF ft(adults, children, seniors, duration):
+    tno_sim <-- ""
+    IF (adults + seniors) > children THEN tno_sim <-- tno_sim + "-d x " + STR(math.CEIL((adults + seniors) / 2)) + "-"
+    ENDIF
+    IF children > (adults + seniors) THEN tno_sim <-- tno_sim + "-d x " + STR(math.CEIL(children / 2)) + "-"
+    ENDIF
+    tno_sim <-- inp_format(tno_sim).split("&")
+    RETURN cost_sim(tno_sim, duration)
+
+DEF ftsingle(adults, children, seniors, duration):
+    tno_sim <-- ""
+    ft_quan <-- 0
+    IF (adults + seniors) < children THEN tno_sim <-- tno_sim + "-d x " + STR(math.FLOOR((adults + seniors) / 2)) + "-"; ft_quan <-- math.FLOOR((adults + seniors) / 2)
+    ENDIF
+    IF children < (adults + seniors) THEN  tno_sim <-- tno_sim + "-d x " + STR(math.FLOOR(children / 3)) + "-"; ft_quan <-- math.FLOOR((children) / 3)
+    ENDIF
+    IF (adults + seniors + children) < 6 THEN 
+        bv_sim <-- [(adults - (2 * ft_quan)), (children - (3 * ft_quan)), (seniors - (2 * ft_quan))]
+        IF bv_sim[0] > 0 THEN tno_sim <-- tno_sim + "-a x " + STR(bv_sim[0]) + "-"
+        ENDIF
+        IF bv_sim[1] > 0 THEN tno_sim <-- tno_sim + "-b x " + STR(bv_sim[1]) + "-"
+        ENDIF
+        IF bv_sim[2] > 0 THEN tno_sim <-- tno_sim + "-c x " + STR(bv_sim[2]) + "-"
+        ENDIF
+    ELSE 
+        bv_sim_two <-- [((adults + seniors) - (2 * ft_quan)), (children - (3 * ft_quan))]
+        people <-- 0
+        FOR item IN bv_sim_two
+            IF item > 0 THEN people <-- people + item
+            ENDIF
+        NEXT
+        IF people > 0 THEN tno_sim <-- tno_sim + "-e x " + STR(people) + "-"
+        ENDIF
+    ENDIF
+    tno_sim <-- inp_format(tno_sim).SPLIT(" & ")
+    RETURN cost_sim(tno_sim, duration)
+
+WHILE True DO
+    # Table Initialisation
+    table <-- PrettyTable()
+    table_two <-- PrettyTable()
+    table_days <-- PrettyTable()
+
+    # Miscellaneous variables
+    count <-- 0
+    tot_cost <-- 0
+    book_no <-- 1
+    error <-- False
+    tc_cost <-- 0
+    ex_cost <-- 0
+
+    duration <-- INPUT "How many days do you want to book for? (1/2)(N --> Bookings are all done)" + "\n" + ">> "
+    IF duration == "N" THEN break
+    ENDIF
+    IF duration != "N" THEN duration <-- INT(duration)
+    ENDIF
+    IF duration == 1 THEN
+        table.FIELD_NAMES <-- ["T.no", "Ticket type", "Cost for one day", "E.no", "Extra attraction", "Cost per person"]
+        FOR key, val IN ticket_type.ITEMS()
+            count += 1
+            IF count >= 3 THEN
+                table.ADD_ROW([key, val, ("&" + STR(cost_one[key])), "---", "---", "---"])
+            ELSE
+                IF count == 1 THEN att_choose <-- "f"
+                ELSEIF count == 2 THEN att_choose <-- "g"
+                ENDIF
+                table.ADD_ROW([key, val, ("&" + STR(cost_one[key])), att_choose, ext_attract[att_choose], ext_cost[att_choose]])
+            ENDIF
+        NEXT
+    ENDIF
+    IF duration == 2 THEN
+        table.FIELD_NAMES <-- ["T.no", "Ticket type", "Cost for two days", "E.no", "Extra attraction", "Cost per person"]
+        FOR key, val IN ticket_type.ITEMS()
+            count += 1
+            IF count >= 4 THEN
+                table.ADD_ROW([key, val, ("&" + STR(cost_two[key])), "---", "---", "---"])
+            ENDIF
+            ELSE
+                IF count == 1 THEN att_choose <-- "f"
+                ELSEIF count == 2 THEN att_choose <-- "g"
+                ELSEIF count == 3 THEN att_choose <-- "h"
+                ENDIF
+                table.ADD_ROW([key, val, ("&" + STR(cost_two[key])), att_choose, ext_attract[att_choose], ext_cost[att_choose]])
+        NEXT
+    ENDIF
+    table_two.FIELD_NAMES <-- ["IdentIFier", "Explanation"]
+    table_two.ADD_ROW(["*", "An adult may bring up to two children."])
+    table_two.ADD_ROW(["**", "Up to two adults or seniors, and three children."])
+    table_two.ADD_ROW(["***", "Price per person."])
+    table.ALIGN <-- "l"
+    table_two.ALIGN <-- "l"
+    table_days.ALIGN <-- "l"
+    PRINT table.GET_STRING()
+    PRINT table_two.GET_STRING(border<--False)
+    table_days.FIELD_NAMES <-- ["Days"]
+    table_days.ADD_ROW(["Monday (1) | Tuesday (2) | Wednesday (3) | Thursday (4) | Friday (5) | Saturday (6) | Sunday (7)"])
+    PRINT table_days.GET_STRING(header<--False)
+
+# Task 2 - Started
+
+    WHILE True DO
+        day_st <-- INT(INPUT "Enter the starting day of your booking." + "\n" + "Example: 2 (for Tuesday)" + "\n" + ">> ") - 1
+        IF duration == 2 AND days[day_st] == "Sunday" THEN
+            PRINT "\033[0;33m \n" + "Dear customer," + "\n" + "You want to book for Sunday of this week and Monday of the next week. This is not allowed. Bookings can only be made up to a week in advance." + "\n" + "Kindly reconsider your decision." + "\n\n" + "Thank you!" + "\n \033[0m"
+        ELSE break
+        ENDIF
+    ENDWHILE
+    WHILE True DO
+        adults <-- INT(INPUT "No. of adults going: (0 --> IF no adult!) ")
+        children <-- INT(INPUT "No. of children going: (0 --> IF no children!) ")
+        seniors <-- INT(INPUT "No. of senior going: (0 --> IF no senior!) ")
+        PRINT "Following are values that you input: \u2193"
+        PRINT "Adults:", adults, "Children", children, "Seniors:", seniors
+        status <-- INPUT "Have you verIFied the values? Do you want to make any changes? (Y/n) "
+        IF status != "Y" THEN break
+        ENDIF
+    ENDWHILE
+    WHILE True DO
+        error <-- False
+        PRINT "Enter whichever ticket you want to purchase. Enter the no. of tickets as well:",  "\n" + "Example: a x 2 & b x 4 & c x 1"
+        tno <-- INPUT ">> "
+        tno <-- tno.SPLIT(" & ")
+        sim_result <-- sim_people(tno)
+        IF (adults + children + seniors) > sim_result[5] THEN PRINT "\033[0;31mERROR!:\033[0m Calculations based on your ticket choices for number of people going are less than the number of people going according to you. Please reconsider your ticket choices!"; error <-- True
+        ENDIF
+        IF sim_result[1] != 0 THEN
+            IF ((sim_result[0]+ sim_result[2]) / sim_result[1]) < 0.5 THEN PRINT "\033[0;31mERROR!:\033[0m Ratio of adults + seniors to children is greater than 1 : 2 with single person tickets, i.e. a, b or c. Ratio allowed is less than or equal to 1 : 2. Please reconsider your ticket choices!"; error <-- True        
+            IF error != True: break
+            ENDIF
+        ENDIF
+    ENDWHILE
+    IF duration == 1 THEN
+        FOR ticket IN tno
+            tot_cost <-- tot_cost + cost_one[ticket.SPLIT(" x ")[0]] * int(ticket.SPLIT(" x ")[1])
+        NEXT
+    ELSE
+        FOR ticket IN tno
+            tot_cost <-- tot_cost + cost_two[ticket.SPLIT(" x ")[0]] * int(ticket.SPLIT(" x ")[1])
+        NEXT
+    ENDIF
+    tc_cost <-- tot_cost
+    eno <-- INPUT "Enter whichever extra attraction you want to add: (f)(N --> No attraction)(f & g --> Multiple attraction format)" + "\n" + ">> "
+    IF eno != "N" THEN
+        eno <-- eno.SPLIT(" & ")
+        FOR att IN eno
+            ex_cost <-- ex_cost + (ext_cost[att] * (adults + seniors + children))
+        NEXT
+        tot_cost <-- tot_cost + ex_cost
+    ENDIF
+    book_id <-- "000" + STR(book_no)
+    booking <-- STR(book_id)
+    PRINT "\n" + "Booking ID:", booking
+    PRINT "Ticket(s):", "\u2193"
+    FOR ticket IN tno
+        tc_ind <-- ticket.SPLIT(" x ")[0]
+        tc_type <-- ticket_type[tc_ind]
+        IF tc_ind == 1 THEN tc_type <-- tc_type[:-2]
+        ELSEIF tc_ind == 3 THEN tc_type <-- tc_type[:-3]
+        ELSEIF tc_ind == 4 THEN tc_type <-- tc_type[:-4]
+        ENDIF
+        ticket <-- tc_type + " (x " + ticket.SPLIT(" x ")[1] + ")"
+        PRINT "-", ticket
+    NEXT
+    PRINT "Day(s):", "\u2193"
+    FOR count IN RANGE(0, INT(duration))
+        day <-- days[day_st + count]
+        PRINT "-", day
+    NEXT
+    PRINT "Extra attraction(s):", "\u2193"
+    IF eno != "N" THEN 
+        FOR att IN eno
+            attraction <-- ext_attract[att]
+            PRINT "-", attraction
+        NEXT
+    ELSE print("--")
+    cost <-- "$" + STR(tot_cost)
+    PRINT "Total Cost:", "\033[1;32m" + cost, "\033[0m\n"
+
+# Task 3  - Started
+    
+    sim_tc_res <-- {"a": single(adults, children, seniors, duration)[0], "b": ft(adults, children, seniors, duration)[0], "c": ftsingle(adults, children, seniors, duration)[0]}
+    sim_cost_res <-- {"a": single(adults, children, seniors, duration)[1], "b": ft(adults, children, seniors, duration)[1], "c": ftsingle(adults, children, seniors, duration)[1]}
+    lowest_val <-- 10000000000000000000000000000
+    FOR key, val IN sim_cost_res.ITEMS():
+        IF val < lowest_val THEN
+            lowest_val <-- val
+            lowest_ind <-- key
+        ENDIF
+    NEXT
+    IF lowest_val < tc_cost THEN
+        PRINT "Our simulations predict a better value option for the configuration of people that you have entered. Simulated cost is:", "$" + str(lowest_val) + " (Without addition of extra attraction cost). The ticket choice is: \u2193"
+        FOR ticket IN sim_tc_res[lowest_ind]
+            tc_ind <-- ticket.SPLIT(" x ")[0]
+            tc_type <-- ticket_type[tc_ind]
+            IF tc_ind == 1 THEN tc_type <-- tc_type[:-2]
+            ELSEIF tc_ind == 3 THEN tc_type <-- tc_type[:-3]
+            ELSEIF tc_ind == 4 THEN tc_type <-- tc_type[:-4]
+            ENDIF
+            ticket <-- tc_type + " (x " + ticket.SPLIT(" x ")[1] + ")"
+            PRINT "-", ticket
+        NEXT
+        consent <-- INPUT "Would you like to change to the better value option? (Y/n) "
+        IF consent == "Y" THEN
+            book_id <-- "000" + STR(book_no)
+            booking <-- STR(book_id)
+            PRINT "\n" + "Booking ID:", booking
+            PRINT "Ticket(s):", "\u2193"
+            FOR ticket IN sim_tc_res[lowest_ind]
+                tc_ind <-- ticket.SPLIT(" x ")[0]
+                tc_type <-- ticket_type[tc_ind]
+                IF tc_ind == 1 THEN tc_type <-- tc_type[:-2]
+                ELSEIF tc_ind == 3 THEN tc_type <-- tc_type[:-3]
+                ELSEIF tc_ind == 4 THEN tc_type <-- tc_type[:-4]
+                ENDIF
+                ticket <-- tc_type + " (x " + ticket.SPLIT(" x ")[1] + ")"
+                PRINT "-", ticket
+            NEXT
+            PRINT "Day(s):", "\u2193"
+            FOR count IN range(0, int(duration))
+                day <-- days[day_st + count]
+                PRINT "-", day
+            NEXT
+            PRINT "Extra attraction(s):", "\u2193"
+            IF eno != "N" THEN
+                FOR att IN eno:
+                    attraction <-- ext_attract[att]
+                    PRINT "-", attraction
+            ELSE PRINT "--"
+            ENDIF
+            cost <-- "$" + STR(lowest_val + ex_cost)
+            PRINT "Total Cost:", "\033[1;32m" + cost, "\033[0m"
+        ENDIF
+    PRINT "\033[1;32m \nCongratulations! Your booking request has been received!\033[0m \n"
+    book_no += 1
+ENDWHILE
