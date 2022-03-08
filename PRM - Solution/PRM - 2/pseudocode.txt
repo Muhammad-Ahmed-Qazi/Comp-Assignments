@@ -1,0 +1,99 @@
+IMPORT datetime // datetime is a python library that is used to work with dates.
+
+DECLARE name_f[1:10000000000000], name_l[1:10000000000000], vol_list[1:10000000000000], vol_area_list[1:10000000000000], date_join[1:10000000000000], pay_status_list[1:10000000000000] AS STRING
+DECLARE area_names[1:10000000000000] AS STRING
+DECLARE name_sponsor[1:10000000000000], message_sponsor[1:10000000000000] AS STRING
+
+area_names <-- ['Pier Entrance Gate', 'Gift Shop', 'Painting and Decorating']
+
+PROCEDURE task_1
+    PRINT "Enter your first name:"
+    INPUT first_name
+    PRINT "Enter your last name:'
+    INPUT last_name
+    PRINT "Do you want to work as a volunteer?(Y/n)"
+    IF volunteer == "Y" THEN
+        PRINT "Which area would you like to work at? (Enter serial no.) 1. Pier Entrance Gate 2. Gift Shop 3. Painting and decorating"
+    ELSE
+        PRINT "Enter your date of joining: (Format: Day-Month-Year | Example: 15-08-2022"
+        INPUT join_date
+        join_date <-- join_date.SPLIT("-") // SPLIT is a python function that is used to break a string into an array. Here it is breaking the string using the '-' sign in the string.
+        join_date <-- datetime.DATETIME(INT(join_date[2]), INT(join_date[1], INT(join_date[0])) // datetime library is being used to convert the string into a proper date data type.
+        PRINT "Enter whether you have paid the $75: (Y/n)"
+        INPUT pay_status
+    ENDIF
+    name_f.APPEND(first_name) // APPEND is a function to insert the data from the variable at the end of the mentioned array.
+    name_l.APPEND(last_name)
+    vol_list.APPEND(volunteer)
+    vol_area_list.APPEND(vol_area)
+    date_join.APPEND(join_date)
+    pay_status_list.APPEND(pay_status)
+ENDPROCEDURE
+
+PROCEDURE task_2
+    PRINT "Categories for data filtration: 1. Members who have chosen to work as volunteers. 2. Volunteers who would like to work at the pier entrance gate. 3. Volunteers who would like to work in the gift shop. 4. Volunteers who would like to help with painting and decorating tasks. 5. Members whose membership has expired (they have not rejoin this year). 6. Members who have not yet paid their $75 fee."
+    PRINT "Enter the category you want to choose: (Enter serial no.)"
+    INPUT category
+    IF category == "1" THEN
+        FOR count <-- 0 TO LEN(name_f) // LEN function counts the number of items in an array.
+            IF vol_list[count] == "Y" THEN PRINT "-", name_f[count], name_l[count]
+            ENDIF
+        NEXT
+    ELSEIF category == "2" THEN
+        FOR count <-- 0 TO LEN(name_f)
+            IF vol_area_list[count] == "1" THEN PRINT "-", name_f[count], name_l[count]
+            ENDIF
+        NEXT
+    ELSEIF category == "3" THEN
+        FOR count <-- 0 TO LEN(name_f)
+            IF vol_area_list[count] == "2" THEN PRINT "-", name_f[count], name_l[count]
+            ENDIF
+        NEXT
+    ELSEIF category == "4" THEN
+        FOR count <-- 0 TO LEN(name_f)
+            IF vol_area_list[count] == "3" THEN PRINT "-", name_f[count], name_l[count]
+            ENDIF
+        NEXT
+    ELSEIF category == "5" THEN
+        FOR count <-- 0 TO LEN(name_f)
+            now <-- datetime.DATETIME.NOW()
+            IF date_join[count] < datetime.DATETIME(INT(now.STRFTIME("%Y"))) THEN PRINT "-", name_f[count], name_l[count] // STRFTIME function converts the date data type back into string using a defined format as '%Y' so that it can be printed and attached to strings.
+            ENDIF
+        NEXT
+    ELSEIF category == "6" THEN
+        FOR count <-- 0 TO LEN(name_f)
+            IF pay_status_list[count] == "n" THEN PRINT "-", name_f[count], name_l[count]
+            ENDIF
+        NEXT
+    ENDIF
+ENDPROCEDURE
+
+PROCEDURE task_3
+    WHILE TRUE DO
+        PRINT "Enter your name:"
+        INPUT name_spon
+        PRINT "Enter the short message that you would like to have on the sponsored brass plaque: "
+        INPUT message
+        PRINT "Please confirm the following inputs:  - Name:", name_spon, " - Short Message: ", message
+        PRINT "Enter whether the inputs are correct or not: (Y/n)"
+        INPUT verify
+        IF verify == "Y" THEN BREAK // BREAK is a keyword that is used to end a loop.
+        ELSE PRINT "Please re-enter the data to avoid errors found in the verification process."
+        ENDIF
+    ENDWHILE
+    name_sponsor.APPEND(name_spon)
+    message_sponsor.APPEND(message)
+    PRINT "Data has been stored. Your charge is: $200"
+ENDPROCEDURE
+
+WHILE TRUE DO
+    PRINT "Which one of the following actions do you want to perform? (Enter S.no for your choice)(N --> End Program) 1. Become a new member of Friends of Seaview Pier 2. Get certain data from the membership data 3. Sponsor a wooden plank"
+    INPUT choice
+    IF choice == "1" THEN CALL task_1
+    ELSEIF choice == "2" THEN CALL task_2
+    ELSEIF choice == "3" THEN CALL task_3
+    ELSEIF choice == "N" THEN BREAK
+    ENDIF
+ENDWHILE
+
+PRINT "Program Ends!"
