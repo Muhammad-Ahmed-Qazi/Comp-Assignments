@@ -12,16 +12,18 @@ PROCEDURE task_1
     PRINT "Enter your last name:'
     INPUT last_name
     PRINT "Do you want to work as a volunteer?(Y/n)"
+    INPUT volunteer
     IF volunteer == "Y" THEN
         PRINT "Which area would you like to work at? (Enter serial no.) 1. Pier Entrance Gate 2. Gift Shop 3. Painting and decorating"
-    ELSE
-        PRINT "Enter your date of joining: (Format: Day-Month-Year | Example: 15-08-2022"
-        INPUT join_date
-        join_date <-- join_date.SPLIT("-") // SPLIT is a python function that is used to break a string into an array. Here it is breaking the string using the '-' sign in the string.
-        join_date <-- datetime.DATETIME(INT(join_date[2]), INT(join_date[1], INT(join_date[0])) // datetime library is being used to convert the string into a proper date data type.
-        PRINT "Enter whether you have paid the $75: (Y/n)"
-        INPUT pay_status
+        INPUT vol_area
+    ELSE vol_area <-- '---'
     ENDIF
+    PRINT "Enter your date of joining: (Format: Day-Month-Year | Example: 15-08-2022"
+    INPUT join_date
+    join_date <-- join_date.SPLIT("-") // SPLIT is a python function that is used to break a string into an array. Here it is breaking the string using the '-' sign in the string.
+    join_date <-- datetime.DATETIME(INT(join_date[2]), INT(join_date[1], INT(join_date[0])) // datetime library is being used to convert the string into a proper date data type.
+    PRINT "Enter whether you have paid the $75: (Y/n)"
+    INPUT pay_status
     name_f.APPEND(first_name) // APPEND is a function to insert the data from the variable at the end of the mentioned array.
     name_l.APPEND(last_name)
     vol_list.APPEND(volunteer)

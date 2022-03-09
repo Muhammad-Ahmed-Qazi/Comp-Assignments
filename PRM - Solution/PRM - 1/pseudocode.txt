@@ -56,9 +56,9 @@ DEF single(adults, children, seniors, duration):
 
 DEF ft(adults, children, seniors, duration):
     tno_sim <-- ""
-    IF (adults + seniors) > children THEN tno_sim <-- tno_sim + "-d x " + STR(math.CEIL((adults + seniors) / 2)) + "-"
+    IF (adults + seniors) > children THEN tno_sim <-- tno_sim + "-d x " + str(math.CEIL((adults + seniors) / 2)) + "-"
     ENDIF
-    IF children > (adults + seniors) THEN tno_sim <-- tno_sim + "-d x " + STR(math.CEIL(children / 2)) + "-"
+    IF children > (adults + seniors) THEN tno_sim <-- tno_sim + "-d x " + str(math.CEIL(children / 2)) + "-"
     ENDIF
     tno_sim <-- inp_format(tno_sim).split("&")
     RETURN cost_sim(tno_sim, duration)
@@ -108,7 +108,7 @@ WHILE True DO
     duration <-- INPUT "How many days do you want to book for? (1/2)(N --> Bookings are all done)" + "\n" + ">> "
     IF duration == "N" THEN break
     ENDIF
-    IF duration != "N" THEN duration <-- INT(duration)
+    IF duration != "N" THEN duration <-- int(duration)
     ENDIF
     IF duration == 1 THEN
         table.FIELD_NAMES <-- ["T.no", "Ticket type", "Cost for one day", "E.no", "Extra attraction", "Cost per person"]
@@ -138,7 +138,6 @@ WHILE True DO
                 ENDIF
                 table.ADD_ROW([key, val, ("&" + STR(cost_two[key])), att_choose, ext_attract[att_choose], ext_cost[att_choose]])
         NEXT
-    ENDIF
     table_two.FIELD_NAMES <-- ["IdentIFier", "Explanation"]
     table_two.ADD_ROW(["*", "An adult may bring up to two children."])
     table_two.ADD_ROW(["**", "Up to two adults or seniors, and three children."])
@@ -180,8 +179,7 @@ WHILE True DO
         IF (adults + children + seniors) > sim_result[5] THEN PRINT "\033[0;31mERROR!:\033[0m Calculations based on your ticket choices for number of people going are less than the number of people going according to you. Please reconsider your ticket choices!"; error <-- True
         ENDIF
         IF sim_result[1] != 0 THEN
-            IF ((sim_result[0]+ sim_result[2]) / sim_result[1]) < 0.5 THEN PRINT "\033[0;31mERROR!:\033[0m Ratio of adults + seniors to children is greater than 1 : 2 with single person tickets, i.e. a, b or c. Ratio allowed is less than or equal to 1 : 2. Please reconsider your ticket choices!"; error <-- True        
-            IF error != True: break
+            IF ((sim_result[0]+ sim_result[2]) / sim_result[1]) < 0.5 THEN PRINT "\033[0;31mERROR!:\033[0m Ratio of adults + seniors to children is greater than 1 : 2 with single person tickets, i.e. a, b or c. Ratio allowed is less than or equal to 1 : 2. Please reconsider your ticket choices!"; error <-- True        IF error != True: break
             ENDIF
         ENDIF
     ENDWHILE
@@ -218,7 +216,7 @@ WHILE True DO
         PRINT "-", ticket
     NEXT
     PRINT "Day(s):", "\u2193"
-    FOR count IN RANGE(0, INT(duration))
+    FOR count IN range(0, int(duration))
         day <-- days[day_st + count]
         PRINT "-", day
     NEXT
@@ -254,7 +252,6 @@ WHILE True DO
             ENDIF
             ticket <-- tc_type + " (x " + ticket.SPLIT(" x ")[1] + ")"
             PRINT "-", ticket
-        NEXT
         consent <-- INPUT "Would you like to change to the better value option? (Y/n) "
         IF consent == "Y" THEN
             book_id <-- "000" + STR(book_no)
@@ -270,12 +267,10 @@ WHILE True DO
                 ENDIF
                 ticket <-- tc_type + " (x " + ticket.SPLIT(" x ")[1] + ")"
                 PRINT "-", ticket
-            NEXT
             PRINT "Day(s):", "\u2193"
             FOR count IN range(0, int(duration))
                 day <-- days[day_st + count]
                 PRINT "-", day
-            NEXT
             PRINT "Extra attraction(s):", "\u2193"
             IF eno != "N" THEN
                 FOR att IN eno:

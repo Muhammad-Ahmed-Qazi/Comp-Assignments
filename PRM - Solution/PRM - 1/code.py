@@ -102,7 +102,7 @@ while True:
                 elif count == 2: att_choose = 'g'
                 table.add_row([key, val, ('&' + str(cost_one[key])), att_choose, ext_attract[att_choose], ext_cost[att_choose]])
     if duration == 2:
-        table.field_names = ['T.no', 'Ticket type', 'Cost for two days', 'E.no', 'Extra attraction', 'Cost per person']
+        table.field_names = ['T.no', 'Ticket type', 'Cost for one day', 'E.no', 'Extra attraction', 'Cost per person']
         for key, val in ticket_type.items():
             count += 1
             if count >= 4:
