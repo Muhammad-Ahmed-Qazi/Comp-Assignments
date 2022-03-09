@@ -1,14 +1,16 @@
 FROM prettytable IMPORT PrettyTable
 IMPORT math
 
-DECLARE ticket_type[5:5] AS ["a": "One Adult", "b": "One Child *", "c": "One Senior", "d": "Family Ticket **", "e": "Groups (6 or > 6) ***"]
-DECLARE cost_one[5:5] AS ["a": 20.0, "b": 12.0, "c": 16.0, "d": 60.0, "e": 15.0]
-DECLARE cost_two[5:5] AS ["a": 30.0, "b": 18.0, "c": 24.0, "d": 90.0, "e": 22.50]
-DECLARE ext_attract[3:3] AS ["f": "Lion Feeding", "g": "Penguin Feeding", "h": "Evening Barbecue"]
-DECLARE ext_cost[3:3] AS ["f": 2.50, "g": 2.0, "h": 5.0]
-DECLARE days[:7] AS ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+DECLARE index[1:5] AS ["a", "b", "c", "d", "e"]
+DECLARE index_second[1:3] AS ["f", "g", "h"]
+DECLARE ticket_type[1:5] AS ["One Adult", "One Child *", ""One Senior", "Family Ticket **", "Groups (6 or > 6) ***"]
+DECLARE cost_one[1:5] AS [20.0, 12.0, 16.0, 60.0, 15.0]
+DECLARE cost_two[1:5] AS [30.0, 18.0, 24.0, 90.0, 22.50]
+DECLARE ext_attract[1:3] AS ["Lion Feeding", "Penguin Feeding", "Evening Barbecue"]
+DECLARE ext_cost[1:3] AS [2.50, 2.0, 5.0]
+DECLARE days[1:7] AS ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
-DEF sim_people(tno):
+FUNCTION sim_people(tno: ARRAY) RETURNS ARRAY
     simulation <-- [0, 0, 0, 0, 0, 0]
     FOR ticket IN tno
         IF ticket.SPLIT(" x ")[0] == "a" THEN simulation[0] += 1 * INT(ticket.SPLIT(" x ")[1])
@@ -24,13 +26,15 @@ DEF sim_people(tno):
     NEXT
     simulation[5] += (simulation[0] + simulation[1] + simulation[2] + simulation[3] + simulation[4])
     RETURN simulation
+ENDFUNCTION
 
-DEF inp_format(tno_sim):
+FUNCTION inp_format(tno_sim: STRING) RETURNS ARRAY
     tno_sim <-- tno_sim.LSTRIP("-").RSTRIP("-")
     tno_sim <-- tno_sim.REPLACE("--", " & ")
     RETURN tno_sim
+ENDFUNCTION
 
-DEF cost_sim(tno_sim, duration):
+FUNCTION cost_sim(tno_sim: ARRAY, duration: INTEGER) RETURNS ARRAY
     sim_cost <-- 0
     IF duration == 2 THEN 
         FOR item IN tno_sim
@@ -42,8 +46,9 @@ DEF cost_sim(tno_sim, duration):
         NEXT
     ENDIF
     RETURN [tno_sim, sim_cost]
+ENDFUNCTION
 
-DEF single(adults, children, seniors, duration):
+FUNCTION single(adults: INTEGER, children: INTEGER, seniors: INTEGER, duration: INTEGER) RETURNS ARRAY
     tno_sim <-- ""
     IF adults > 0 THEN tno_sim <-- tno_sim + "-a x " + STR(adults) + "-"
     ENDIF
@@ -53,8 +58,9 @@ DEF single(adults, children, seniors, duration):
     ENDIF
     tno_sim <-- inp_format(tno_sim).SPLIT(" & ")
     RETURN cost_sim(tno_sim, duration)
+ENDFUNCTION
 
-DEF ft(adults, children, seniors, duration):
+FUNCTION ft(adults: INTEGER, children: INTEGER, seniors: INTEGER, duration: INTEGER) RETURNS ARRAY
     tno_sim <-- ""
     IF (adults + seniors) > children THEN tno_sim <-- tno_sim + "-d x " + str(math.CEIL((adults + seniors) / 2)) + "-"
     ENDIF
@@ -62,8 +68,9 @@ DEF ft(adults, children, seniors, duration):
     ENDIF
     tno_sim <-- inp_format(tno_sim).split("&")
     RETURN cost_sim(tno_sim, duration)
+ENDFUNCTION
 
-DEF ftsingle(adults, children, seniors, duration):
+FUNCTION ftsingle(adults: INTEGER, children: INTEGER, seniors: INTEGER, duration: INTEGER) RETURNS ARRAY
     tno_sim <-- ""
     ft_quan <-- 0
     IF (adults + seniors) < children THEN tno_sim <-- tno_sim + "-d x " + STR(math.FLOOR((adults + seniors) / 2)) + "-"; ft_quan <-- math.FLOOR((adults + seniors) / 2)
@@ -105,10 +112,11 @@ WHILE True DO
     tc_cost <-- 0
     ex_cost <-- 0
 
-    duration <-- INPUT "How many days do you want to book for? (1/2)(N --> Bookings are all done)" + "\n" + ">> "
+    PRINT "How many days do you want to book for? (1/2)(N --> Bookings are all done)" & "\n" & ">> "
+    INPUT duration
     IF duration == "N" THEN break
     ENDIF
-    IF duration != "N" THEN duration <-- int(duration)
+    IF duration != "N" THEN duration <-- INT(duration)
     ENDIF
     IF duration == 1 THEN
         table.FIELD_NAMES <-- ["T.no", "Ticket type", "Cost for one day", "E.no", "Extra attraction", "Cost per person"]
@@ -154,26 +162,32 @@ WHILE True DO
 # Task 2 - Started
 
     WHILE True DO
-        day_st <-- INT(INPUT "Enter the starting day of your booking." + "\n" + "Example: 2 (for Tuesday)" + "\n" + ">> ") - 1
+        PRINT "Enter the starting day of your booking." + "\n" + "Example: 2 (for Tuesday)" + "\n" + ">> "
+        INPUT day_st
+        day_st <-- day_st - 1
         IF duration == 2 AND days[day_st] == "Sunday" THEN
             PRINT "\033[0;33m \n" + "Dear customer," + "\n" + "You want to book for Sunday of this week and Monday of the next week. This is not allowed. Bookings can only be made up to a week in advance." + "\n" + "Kindly reconsider your decision." + "\n\n" + "Thank you!" + "\n \033[0m"
         ELSE break
         ENDIF
     ENDWHILE
     WHILE True DO
-        adults <-- INT(INPUT "No. of adults going: (0 --> IF no adult!) ")
-        children <-- INT(INPUT "No. of children going: (0 --> IF no children!) ")
-        seniors <-- INT(INPUT "No. of senior going: (0 --> IF no senior!) ")
+        PRINT "No. of adults going: (0 --> IF no adult!) "
+        INPUT adults
+        PRINT "No. of children going: (0 --> IF no children!) "
+        INPUT children
+        PRINT "No. of senior going: (0 --> IF no senior!) "
+        INPUT seniors
         PRINT "Following are values that you input: \u2193"
         PRINT "Adults:", adults, "Children", children, "Seniors:", seniors
-        status <-- INPUT "Have you verIFied the values? Do you want to make any changes? (Y/n) "
+        PRINT "Have you verIFied the values? Do you want to make any changes? (Y/n) "
+        INPUT status
         IF status != "Y" THEN break
         ENDIF
     ENDWHILE
     WHILE True DO
         error <-- False
-        PRINT "Enter whichever ticket you want to purchase. Enter the no. of tickets as well:",  "\n" + "Example: a x 2 & b x 4 & c x 1"
-        tno <-- INPUT ">> "
+        PRINT "Enter whichever ticket you want to purchase. Enter the no. of tickets as well:",  "\n" & "Example: a x 2 & b x 4 & c x 1"
+        INPUT tno
         tno <-- tno.SPLIT(" & ")
         sim_result <-- sim_people(tno)
         IF (adults + children + seniors) > sim_result[5] THEN PRINT "\033[0;31mERROR!:\033[0m Calculations based on your ticket choices for number of people going are less than the number of people going according to you. Please reconsider your ticket choices!"; error <-- True
@@ -193,7 +207,8 @@ WHILE True DO
         NEXT
     ENDIF
     tc_cost <-- tot_cost
-    eno <-- INPUT "Enter whichever extra attraction you want to add: (f)(N --> No attraction)(f & g --> Multiple attraction format)" + "\n" + ">> "
+    PRINT "Enter whichever extra attraction you want to add: (f)(N --> No attraction)(f & g --> Multiple attraction format)" & "\n" & ">> "
+    INPUT eno 
     IF eno != "N" THEN
         eno <-- eno.SPLIT(" & ")
         FOR att IN eno
@@ -201,9 +216,9 @@ WHILE True DO
         NEXT
         tot_cost <-- tot_cost + ex_cost
     ENDIF
-    book_id <-- "000" + STR(book_no)
+    book_id <-- "000" & STR(book_no)
     booking <-- STR(book_id)
-    PRINT "\n" + "Booking ID:", booking
+    PRINT "\n" & "Booking ID:", booking
     PRINT "Ticket(s):", "\u2193"
     FOR ticket IN tno
         tc_ind <-- ticket.SPLIT(" x ")[0]
@@ -212,7 +227,7 @@ WHILE True DO
         ELSEIF tc_ind == 3 THEN tc_type <-- tc_type[:-3]
         ELSEIF tc_ind == 4 THEN tc_type <-- tc_type[:-4]
         ENDIF
-        ticket <-- tc_type + " (x " + ticket.SPLIT(" x ")[1] + ")"
+        ticket <-- tc_type & " (x " + ticket.SPLIT(" x ")[1] + ")"
         PRINT "-", ticket
     NEXT
     PRINT "Day(s):", "\u2193"
@@ -227,13 +242,13 @@ WHILE True DO
             PRINT "-", attraction
         NEXT
     ELSE print("--")
-    cost <-- "$" + STR(tot_cost)
-    PRINT "Total Cost:", "\033[1;32m" + cost, "\033[0m\n"
+    cost <-- "$" & STR(tot_cost)
+    PRINT "Total Cost:", "\033[1;32m" & cost, "\033[0m\n"
 
 # Task 3  - Started
     
-    sim_tc_res <-- {"a": single(adults, children, seniors, duration)[0], "b": ft(adults, children, seniors, duration)[0], "c": ftsingle(adults, children, seniors, duration)[0]}
-    sim_cost_res <-- {"a": single(adults, children, seniors, duration)[1], "b": ft(adults, children, seniors, duration)[1], "c": ftsingle(adults, children, seniors, duration)[1]}
+    sim_tc_res <-- {single(adults, children, seniors, duration)[0], ft(adults, children, seniors, duration)[0], ftsingle(adults, children, seniors, duration)[0]}
+    sim_cost_res <-- {single(adults, children, seniors, duration)[1], ft(adults, children, seniors, duration)[1], ftsingle(adults, children, seniors, duration)[1]}
     lowest_val <-- 10000000000000000000000000000
     FOR key, val IN sim_cost_res.ITEMS():
         IF val < lowest_val THEN
@@ -242,7 +257,7 @@ WHILE True DO
         ENDIF
     NEXT
     IF lowest_val < tc_cost THEN
-        PRINT "Our simulations predict a better value option for the configuration of people that you have entered. Simulated cost is:", "$" + str(lowest_val) + " (Without addition of extra attraction cost). The ticket choice is: \u2193"
+        PRINT "Our simulations predict a better value option for the configuration of people that you have entered. Simulated cost is:", "$" & str(lowest_val) & " (Without addition of extra attraction cost). The ticket choice is: \u2193"
         FOR ticket IN sim_tc_res[lowest_ind]
             tc_ind <-- ticket.SPLIT(" x ")[0]
             tc_type <-- ticket_type[tc_ind]
@@ -250,13 +265,14 @@ WHILE True DO
             ELSEIF tc_ind == 3 THEN tc_type <-- tc_type[:-3]
             ELSEIF tc_ind == 4 THEN tc_type <-- tc_type[:-4]
             ENDIF
-            ticket <-- tc_type + " (x " + ticket.SPLIT(" x ")[1] + ")"
+            ticket <-- tc_type & " (x " + ticket.SPLIT(" x ")[1] & ")"
             PRINT "-", ticket
-        consent <-- INPUT "Would you like to change to the better value option? (Y/n) "
+        PRINT "Would you like to change to the better value option? (Y/n) "
+        INPUT consent 
         IF consent == "Y" THEN
-            book_id <-- "000" + STR(book_no)
+            book_id <-- "000" & STR(book_no)
             booking <-- STR(book_id)
-            PRINT "\n" + "Booking ID:", booking
+            PRINT "\n" & "Booking ID:", booking
             PRINT "Ticket(s):", "\u2193"
             FOR ticket IN sim_tc_res[lowest_ind]
                 tc_ind <-- ticket.SPLIT(" x ")[0]
@@ -265,7 +281,7 @@ WHILE True DO
                 ELSEIF tc_ind == 3 THEN tc_type <-- tc_type[:-3]
                 ELSEIF tc_ind == 4 THEN tc_type <-- tc_type[:-4]
                 ENDIF
-                ticket <-- tc_type + " (x " + ticket.SPLIT(" x ")[1] + ")"
+                ticket <-- tc_type & " (x " + ticket.SPLIT(" x ")[1] & ")"
                 PRINT "-", ticket
             PRINT "Day(s):", "\u2193"
             FOR count IN range(0, int(duration))
@@ -278,8 +294,8 @@ WHILE True DO
                     PRINT "-", attraction
             ELSE PRINT "--"
             ENDIF
-            cost <-- "$" + STR(lowest_val + ex_cost)
-            PRINT "Total Cost:", "\033[1;32m" + cost, "\033[0m"
+            cost <-- "$" & STR(lowest_val + ex_cost)
+            PRINT "Total Cost:", "\033[1;32m" & cost, "\033[0m"
         ENDIF
     PRINT "\033[1;32m \nCongratulations! Your booking request has been received!\033[0m \n"
     book_no += 1
